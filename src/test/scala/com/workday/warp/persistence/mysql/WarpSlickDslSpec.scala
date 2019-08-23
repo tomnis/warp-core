@@ -4,6 +4,7 @@ package com.workday.warp.persistence.mysql
 import java.sql
 import java.util.{Calendar, TimeZone, Date => JUDate}
 import java.time._
+import java.sql
 import java.sql.Timestamp
 import java.text.SimpleDateFormat
 import java.time.format.DateTimeFormatter
@@ -244,12 +245,11 @@ class WarpSlickDslSpec extends WarpJUnitSpec with CorePersistenceAware {
 
     val testExecution: TestExecutionRowLike = this.persistenceUtils.createTestExecution(methodSignature1, new JUDate, 1.0, 10)
     val timeStamp: Rep[Timestamp] = testExecution.startTime
-    val query1: Rep[String] = timeStamp date()
-    this.persistenceUtils.runWithRetries(query1.result, 5) shouldEqual date
+    val query1: Rep[sql.Date] = timeStamp.date()
+    this.persistenceUtils.runWithRetries(query1.result).toString shouldEqual date
 
-    val query2: Query[Rep[String], String, Seq] = TestExecution.map(t => t.startTime date())
-    this.persistenceUtils.runWithRetries(query2.result, 5).head shouldEqual date
-
+    val query2: Query[Rep[sql.Date], sql.Date, Seq] = TestExecution.map(_.startTime.date())
+    this.persistenceUtils.runWithRetries(query2.result).head.toString shouldEqual date
   }
 
   @Test

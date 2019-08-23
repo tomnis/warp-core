@@ -1,5 +1,6 @@
 package com.workday.warp.persistence.mysql
 
+import java.sql
 import java.sql.Timestamp
 
 import slick.jdbc.MySQLProfile.api._
@@ -119,8 +120,8 @@ trait HasWarpSlickDsl {
       * Translates to DATE() function
       * @return just date in "yyyy-MM-dd"
       */
-    def date(): Rep[String] = {
-      val expression = SimpleExpression.unary[Timestamp, String] { (timestamp, queryBuilder) =>
+    def date(): Rep[sql.Date] = {
+      val expression = SimpleExpression.unary[Timestamp, sql.Date] { (timestamp, queryBuilder) =>
         queryBuilder.sqlBuilder += " DATE ("
         queryBuilder.expr(timestamp)
         queryBuilder.sqlBuilder += ")"
