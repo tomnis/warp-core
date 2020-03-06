@@ -40,9 +40,8 @@ apply plugin: 'nebula.dependency-lock'
 apply plugin: 'nebula.gradle-git-scm'
 apply plugin: 'nebula.release'
 apply plugin: 'nebula.maven-resolved-dependencies'
-apply plugin: 'org.scoverage'
-// must be applied after scoverage
 apply plugin: 'io.github.cosmicsilence.scalafix'
+apply plugin: 'org.scoverage'
 apply plugin: 'com.github.kt3k.coveralls'
 apply plugin: 'maven-publish'
 apply plugin: 'signing'
@@ -270,10 +269,10 @@ coveralls {
     coberturaReportPath = "${buildDir}/reports/scoverage/cobertura.xml"
 }
 
-scalafix {
-    excludes = ["**/persistence/model/**"]
-    ignoreSourceSets = ["scoverage"]
-}
+//scalafix {
+//    excludes = ["**/persistence/model/**"]
+//    ignoreSourceSets = ["scoverage"]
+//}
 
 
 // current workaround nebula incremental analysis failure
