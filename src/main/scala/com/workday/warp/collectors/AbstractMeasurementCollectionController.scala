@@ -82,13 +82,20 @@ abstract class AbstractMeasurementCollectionController(val testId: String = Defa
 
 
   /** Starts all the collectors that are configured. */
-  def beginMeasurementCollection(timeStarted: Instant = Instant.now()): Unit = {
+  def beginMeasurementCollection(timeStarted: Instant): Unit = {
     this._measurementInProgress = true
 
     // only perform concurrent measurement collection if collector priorities and concurrent collection are enabled
     this.startCollectors()
     this.timeStarted = timeStarted
   }
+
+  /**
+    * Starts all collectors that are configured.
+    *
+    * Alt signature purely for java compat.
+    */
+  def beginMeasurementCollection(): Unit = this.beginMeasurementCollection(timeStarted = Instant.now())
 
 
   /**
@@ -104,13 +111,8 @@ abstract class AbstractMeasurementCollectionController(val testId: String = Defa
     this.collectorSchedule foreach { case (priority: Int, scheduledCollectors: List[AbstractMeasurementCollector]) =>
       Logger.debug(s"starting concurrent collectors for priority level $priority: $scheduledCollectors")
 
-      val measurementTasks: Seq[Future[Unit]] = for (collector <- scheduledCollectors) yield Future {
-        collector.tryStartMeasurement()
-      }
-
-      if (measurementTasks.nonEmpty) {
-        FutureUtils.execute(measurementTasks)
-      }
+      val tasks: Seq[Future[Unit]] = scheduledCollectors.map(c => Future { c.tryStartMeasurement() } )
+      FutureUtils.execute(tasks)
     }
   }
 
@@ -366,14 +368,8 @@ abstract class AbstractMeasurementCollectionController(val testId: String = Defa
     // create a list of tuples of (priority, collector list) for each enabled priority level
     this.collectorSchedule.reverse foreach { case (priority: Int, scheduledCollectors: List[AbstractMeasurementCollector]) =>
       Logger.debug(s"stopping concurrent collectors for priority level $priority: $scheduledCollectors")
-
-      val measurementTasks: Seq[Future[Unit]] = for (collector <- scheduledCollectors) yield Future {
-        collector.tryStopMeasurement(maybeTestExecution)
-      }
-
-      if (measurementTasks.nonEmpty) {
-        FutureUtils.execute(measurementTasks)
-      }
+      val tasks: Seq[Future[Unit]] = scheduledCollectors.map(c => Future { c.tryStopMeasurement(maybeTestExecution) })
+      FutureUtils.execute(tasks)
     }
   }
 
