@@ -106,7 +106,7 @@ object AnnotationReader extends StackTraceFilter {
     for {
       m <- testId.maybeTestMethod.toOption
       a <- AnnotationUtils.findAnnotation(m, classOf[Required]).toOption
-    } yield Duration.ofNanos(TimeUtils.toNanos(a.maxResponseTime, a.timeUnit))
+    } yield TimeUtils.durationOf(a.maxResponseTime, a.timeUnit)
   }
 
 
@@ -117,10 +117,19 @@ object AnnotationReader extends StackTraceFilter {
     * @param testId fully qualified name of the junit test method
     * @return max response time as a [[Duration]] for the test we are about to invoke
     */
+    @deprecated
   def getTimeoutValue(testId: String): Duration = {
     this.getWarpTestMethodAnnotation(classOf[Timeout], testId)
       .map(timeout => Duration.ofNanos(TimeUtils.toNanos(timeout.value, timeout.unit)))
       .getOrElse(Duration.ofMillis(-1))
+  }
+
+
+  def getTimeoutValue(testId: TestId): Option[Duration] = {
+    for {
+      m <- testId.maybeTestMethod.toOption
+      timeout <- AnnotationUtils.findAnnotation(m, classOf[Timeout]).toOption
+    } yield TimeUtils.durationOf(timeout.value, timeout.unit)
   }
 
 

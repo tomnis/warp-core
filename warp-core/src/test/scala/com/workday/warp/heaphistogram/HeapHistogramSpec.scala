@@ -3,8 +3,8 @@ package com.workday.warp.heaphistogram
 import java.io.InputStream
 
 import com.workday.telemetron.spec.HasRandomTestId
+import com.workday.warp.TestId
 import com.workday.warp.collectors._
-import com.workday.warp.config.CoreConstants
 import com.workday.warp.junit.{UnitTest, WarpJUnitSpec}
 import org.junit.jupiter.api.parallel.Isolated
 
@@ -53,8 +53,8 @@ class HeapHistogramSpec extends WarpJUnitSpec with HistogramIoLike with HasRando
     */
   @UnitTest
   def lifecycleSpec(): Unit = {
-    val measCollectionController: AbstractMeasurementCollectionController = new DefaultMeasurementCollectionController()
-    val contHeapHistoCollector: AbstractMeasurementCollector = new ContinuousHeapHistogramCollector(CoreConstants.UNDEFINED_TEST_ID)
+    val measCollectionController: AbstractMeasurementCollectionController = new DefaultMeasurementCollectionController(TestId.empty)
+    val contHeapHistoCollector: AbstractMeasurementCollector = new ContinuousHeapHistogramCollector(TestId.empty)
 
     measCollectionController.registerCollector(contHeapHistoCollector)
     measCollectionController.registerCollector(new HeapHistogramCollector(this.randomTestId()))

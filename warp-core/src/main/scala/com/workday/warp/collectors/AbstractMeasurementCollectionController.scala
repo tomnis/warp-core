@@ -3,18 +3,15 @@ package com.workday.warp.collectors
 import java.time.{Duration, Instant}
 
 import com.workday.warp.{TestId, TrialResult}
-import com.workday.warp.config.CoreConstants
 import com.workday.warp.utils.Implicits._
-import com.workday.warp.TestIdImplicits._
-import com.workday.warp.arbiters.ArbiterLike
+import com.workday.warp.arbiters.{ArbiterLike, Ballot}
 import com.workday.warp.persistence.exception.{PreExistingTagException, WarpFieldPersistenceException}
 import com.workday.warp.persistence._
 import com.workday.warp.persistence.TablesLike._
 import com.workday.warp.persistence.Tables.{TestDefinitionMetaTag => _, TestExecutionMetaTag => _, _}
 import com.workday.warp.persistence.TablesLike.RowTypeClasses._
 import com.workday.warp.persistence.Tag
-import com.workday.warp.utils.{AnnotationReader, Ballot, FutureUtils, TimeUtils}
-import org.junit.jupiter.api.TestInfo
+import com.workday.warp.utils.{AnnotationReader, CoreConstants, FutureUtils, TimeUtils}
 import org.pmw.tinylog.Logger
 
 import scala.concurrent.Future
@@ -35,15 +32,8 @@ import scala.util.{Failure, Success, Try}
   * @param tags [[List]] of [[Tag]] that should be persisted during endMeasurementCollection.
   */
 // TODO consider renaming to AbstractMeasurementController
-abstract class AbstractMeasurementCollectionController(val testId: String = Defaults.testId,
-                                                       val tags: List[Tag] = Defaults.tags) extends PersistenceAware {
+abstract class AbstractMeasurementCollectionController(val testId: TestId, val tags: Seq[Tag]) extends PersistenceAware {
 
-
-  // boilerplate for java interop
-  def this(info: TestInfo, tags: List[Tag]) = this(info.testId, tags)
-  def this(info: TestInfo) = this(info.testId)
-  def this(hasTestId: TestId, tags: List[Tag]) = this(hasTestId.testId, tags)
-  def this(hasTestId: TestId) = this(hasTestId.testId)
 
   // scalastyle:off var.field
   /** collectors that will be wrapped around this test. */
@@ -246,10 +236,10 @@ abstract class AbstractMeasurementCollectionController(val testId: String = Defa
 
     // if there isn't a threshold set on the trial result already, use what is set on the required or junit5 timeout annotation
     val threshold: Duration = List(
-      trial.maybeThreshold.getOrElse(Duration.ofMillis(-1)),
+      trial.maybeThreshold,
       AnnotationReader.getRequiredMaxValue(this.testId),
       AnnotationReader.getTimeoutValue(this.testId)
-    ).find(_.isPositive).getOrElse(Duration.ofMillis(-1))
+    ).flatten.find(_.isPositive).getOrElse(Duration.ofMillis(-1))
 
     val maybeTestExecution: Option[TestExecutionRowLike] = Option(
       this.persistenceUtils.createTestExecution(
@@ -294,7 +284,7 @@ abstract class AbstractMeasurementCollectionController(val testId: String = Defa
     * @return A list of nested tuples correlating a metatag and outer tag with a Try indicating if it was successfully persisted
     *         List (outerTag, (try OuterTag, List(MetaTag, Try[MetaTag]))
     */
-  def recordTags[T: TestExecutionRowLikeType](tags: List[Tag], testExecution: T): List[PersistTagResult] = {
+  def recordTags[T: TestExecutionRowLikeType](tags: Seq[Tag], testExecution: T): Seq[PersistTagResult] = {
     tags map {
       outerTag =>
         val rowId: Try[Int] = outerTag match {
@@ -477,6 +467,7 @@ abstract class AbstractMeasurementCollectionController(val testId: String = Defa
 }
 
 /** Holds default constructor arguments referenced by both auxiliary constructors and named primary constructor args. */
+@deprecated
 object Defaults {
 
   /** default testId obtained from [[CoreConstants]]. */

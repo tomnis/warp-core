@@ -3,15 +3,13 @@ package com.workday.warp.arbiters
 import java.time.{Duration, LocalDate}
 import java.util.concurrent.TimeUnit
 
-import com.workday.warp.RequirementViolationException
 import com.workday.warp.config.CoreWarpProperty._
-import com.workday.warp.config.CoreConstants
 import com.workday.warp.utils.Implicits._
 import com.workday.warp.math.linalg.{CanSmoothTimeSeries, RobustPcaRunner}
 import com.workday.warp.persistence.TablesLike.TestExecutionRowLikeType
 import com.workday.warp.persistence.Tables._
 import com.workday.warp.persistence.exception.WarpFieldPersistenceException
-import com.workday.warp.utils.{Ballot, TimeUtils}
+import com.workday.warp.utils.{CoreConstants, TimeUtils}
 import org.pmw.tinylog.Logger
 
 import scala.annotation.tailrec

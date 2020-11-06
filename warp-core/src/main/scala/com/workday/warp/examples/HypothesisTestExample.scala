@@ -4,6 +4,7 @@ import java.time.Instant
 
 import com.workday.warp.TrialResult
 import com.workday.warp.dsl.{defaults, using}
+import com.workday.warp.TestIdImplicits.methodSignatureIsTestId
 import com.workday.warp.math.stats.{AllRegressionStatTestResults, TwoSampleRegressionTest}
 import com.workday.warp.persistence.{Connection, CorePersistenceAware, CorePersistenceUtils, ExecutionTag}
 

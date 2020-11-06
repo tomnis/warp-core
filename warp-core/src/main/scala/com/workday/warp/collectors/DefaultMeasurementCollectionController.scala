@@ -1,7 +1,7 @@
 package com.workday.warp.collectors
 
 import com.workday.warp.TestId
-import com.workday.warp.TestIdImplicits._
+import com.workday.warp.TestIdImplicits.testInfoIsTestId
 import com.workday.warp.persistence.{CorePersistenceAware, Tag}
 import org.junit.jupiter.api.TestInfo
 
@@ -10,18 +10,16 @@ import org.junit.jupiter.api.TestInfo
   * and a [[HeapUsageCollector]].
   *
   * @param testId fully qualified name of the method being measured.
-  * @param tags [[List]] of [[Tag]] that should be persisted during endMeasurementCollection.
+  * @param tags [[Seq]] of [[Tag]] that should be persisted during endMeasurementCollection.
   */
-class DefaultMeasurementCollectionController(override val testId: String = Defaults.testId,
-                                             override val tags: List[Tag] = Defaults.tags)
+class DefaultMeasurementCollectionController(override val testId: TestId,
+                                             override val tags: Seq[Tag] = Nil)
   extends AbstractMeasurementCollectionController(testId, tags) with CorePersistenceAware {
 
 
   // boilerplate for java interop
-  def this(info: TestInfo, tags: List[Tag]) = this(info.testId, tags)
-  def this(info: TestInfo) = this(info.testId)
-  def this(hasTestId: TestId, tags: List[Tag]) = this(hasTestId.testId, tags)
-  def this(hasTestId: TestId) = this(hasTestId.testId)
+  def this(info: TestInfo) = this(testInfoIsTestId(info))
+  def this(info: TestInfo, tags: Seq[Tag]) = this(testInfoIsTestId(info), tags)
 
   this._collectors = List(new WallClockTimeCollector(this.testId), new HeapUsageCollector(this.testId))
 }

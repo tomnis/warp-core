@@ -1,6 +1,7 @@
 package com.workday.warp.collectors
 
 import com.workday.telemetron.spec.HasRandomTestId
+import com.workday.warp.TestId
 import com.workday.warp.junit.{UnitTest, WarpJUnitSpec}
 import com.workday.warp.persistence.Tables.RowTypeClasses.TestExecutionRowTypeClassObject
 
@@ -14,7 +15,7 @@ class ResponseTimeCollectorSpec extends WarpJUnitSpec with HasRandomTestId {
     */
   @UnitTest
   def responseTime(): Unit = {
-    val controller: AbstractMeasurementCollectionController = new DefaultMeasurementCollectionController()
+    val controller: AbstractMeasurementCollectionController = new DefaultMeasurementCollectionController(TestId.empty)
     controller.registerCollector(new ResponseTimeCollector(this.randomTestId()))
 
     controller.beginMeasurementCollection()

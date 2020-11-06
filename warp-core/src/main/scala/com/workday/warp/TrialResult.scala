@@ -18,21 +18,21 @@ case class TrialResult[+TrialType](maybeResponseTime: Option[Duration] = None,
                                    maybeResult: Option[TrialType] = None) {
 
   /**
-    * Auxiliary constructor.
+    * Auxiliary constructor for java interop.
     *
     * @param responseTime [[Duration]] representing the measured response time.
     * @return a [[TrialResult]] with the specified response time and an empty [[TestExecutionRowLike]]
     */
-  def this(responseTime: Duration) = this(Option(responseTime), None, None)
+  def this(responseTime: Duration) = this(Option(responseTime))
 
   /**
-    * Auxiliary constructor.
+    * Auxiliary constructor for java interop.
     *
     * @param responseTime [[Duration]] representing the measured response time.
     * @param threshold [[Duration]] representing the maximum acceptable measured response time.
     * @return a [[TrialResult]] with the specified response time and an empty [[TestExecutionRowLike]]
     */
-  def this(responseTime: Duration, threshold: Duration) = this(Option(responseTime), Option(threshold), None)
+  def this(responseTime: Duration, threshold: Duration) = this(Option(responseTime), Option(threshold))
 }
 
 

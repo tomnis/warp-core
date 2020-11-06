@@ -1,4 +1,4 @@
-package com.workday.warp.exception
+package com.workday.warp.utils
 
 import org.pmw.tinylog.Logger
 

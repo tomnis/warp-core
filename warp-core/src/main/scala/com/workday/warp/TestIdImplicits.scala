@@ -58,6 +58,7 @@ object TestIdImplicits {
     * @param signature
     * @return
     */
+    // TODO consider renaming to stringIsTestId
   implicit def methodSignatureIsTestId(signature: String): TestId = new TestId {
     private lazy val className: String = signature take signature.lastIndexOf('.')
     private lazy val methodName: String = testId drop testId.lastIndexOf('.') + 1

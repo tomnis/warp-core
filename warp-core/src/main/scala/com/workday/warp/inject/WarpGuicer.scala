@@ -47,10 +47,10 @@ object WarpGuicer {
   }
 
   private val moduleConstructor: Constructor[WarpModule] = this.moduleClass.getConstructor(
-    classOf[String], classOf[List[Tag]]
+    classOf[TestId], classOf[Seq[Tag]]
   )
 
-  val baseModule: WarpModule = this.moduleConstructor.newInstance("", List.empty[Tag])
+  val baseModule: WarpModule = this.moduleConstructor.newInstance(TestId.empty, Nil)
 
   // won't be used for creating any controllers
   val baseInjector: Injector = Guice.createInjector(this.baseModule)
@@ -67,8 +67,9 @@ object WarpGuicer {
     * @param tags tags to use for this test.
     * @return a measurement controller.
     */
-  def getController(testId: String, tags: Iterable[Tag] = Seq.empty): AbstractMeasurementCollectionController = {
-    val module: WarpModule = this.moduleConstructor.newInstance(testId, tags.toList)
+    @deprecated("use getController(TestId) instead", "4.4.0")
+  def getController(testId: String, tags: Seq[Tag] = Nil): AbstractMeasurementCollectionController = {
+    val module: WarpModule = this.moduleConstructor.newInstance(testId, tags)
     this.getController(module)
   }
 
@@ -80,8 +81,8 @@ object WarpGuicer {
     * @param tags tags to use for this test.
     * @return a measurement controller.
     */
-  def getController(info: TestInfo, tags: Iterable[Tag]): AbstractMeasurementCollectionController = {
-    this.getController(info.testId, tags)
+  def getController(info: TestInfo, tags: Seq[Tag]): AbstractMeasurementCollectionController = {
+    this.getController(info, tags)
   }
   def getController(info: TestInfo): AbstractMeasurementCollectionController = this.getController(info, Nil)
 
@@ -89,14 +90,14 @@ object WarpGuicer {
   /**
     * Convenience method for obtaining a controller instance.
     *
-    * @param hasTestId a testId container.
+    * @param testId a testId container.
     * @param tags tags to use for this test.
     * @return a measurement controller.
     */
-  def getController(hasTestId: TestId, tags: Iterable[Tag]): AbstractMeasurementCollectionController = {
-    this.getController(hasTestId.testId, tags)
+  def getController(testId: TestId, tags: Seq[Tag]): AbstractMeasurementCollectionController = {
+    this.getController(testId, tags)
   }
-  def getController(hasTestId: TestId): AbstractMeasurementCollectionController = this.getController(hasTestId, Nil)
+  def getController(testId: TestId): AbstractMeasurementCollectionController = this.getController(testId, Nil)
 
 
   /**

@@ -1,6 +1,7 @@
 package com.workday.warp.inject.modules
 
 import com.google.inject.Provides
+import com.workday.warp.TestId
 import com.workday.warp.collectors.AbstractMeasurementCollectionController
 import com.workday.warp.config.WarpPropertyLike
 import com.workday.warp.logger.WriterConfig
@@ -16,8 +17,8 @@ import com.workday.warp.persistence.Tag
   */
 trait HasWarpBindings {
 
-  val testId: String
-  val tags: List[Tag]
+  val testId: TestId
+  val tags: Seq[Tag]
 
   /** @return a [[AbstractMeasurementCollectionController]]. Subclasses should override this to provide their own bindings. */
   @Provides def getController: AbstractMeasurementCollectionController

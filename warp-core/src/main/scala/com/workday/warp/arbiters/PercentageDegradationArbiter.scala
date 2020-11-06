@@ -1,10 +1,9 @@
 package com.workday.warp.arbiters
 
-import com.workday.warp.RequirementViolationException
 import com.workday.warp.config.CoreWarpProperty._
 import com.workday.warp.persistence.TablesLike.TestExecutionRowLikeType
 import com.workday.warp.persistence.Tables._
-import com.workday.warp.utils.{AnnotationReader, Ballot}
+import com.workday.warp.utils.AnnotationReader
 import org.pmw.tinylog.Logger
 
 /**

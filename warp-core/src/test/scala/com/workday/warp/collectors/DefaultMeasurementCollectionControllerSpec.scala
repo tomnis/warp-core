@@ -2,12 +2,13 @@ package com.workday.warp.collectors
 
 import java.time.Instant
 
-import com.workday.warp.TrialResult
+import com.workday.warp.{TestId, TrialResult}
 import com.workday.warp.arbiters.SmartNumberArbiter
 import com.workday.warp.utils.Implicits._
 import com.workday.warp.junit.{UnitTest, WarpJUnitSpec}
 import com.workday.warp.persistence.Tables._
 import com.workday.warp.persistence.TablesLike.RowTypeClasses._
+import com.workday.warp.TestIdImplicits.methodSignatureIsTestId
 import slick.jdbc.MySQLProfile.api._
 import com.workday.warp.persistence.{TablesLike, Tag, _}
 import org.junit.jupiter.api.parallel.Isolated
@@ -87,10 +88,10 @@ class DefaultMeasurementCollectionControllerSpec extends WarpJUnitSpec with Core
       DefinitionTag("key2", "val21")
     )
 
-    val controller: DefaultMeasurementCollectionController = new DefaultMeasurementCollectionController(tags = newTags)
+    val controller: DefaultMeasurementCollectionController = new DefaultMeasurementCollectionController(TestId.empty, tags = newTags)
     controller.isIntrusive should be (false)
     controller.measurementInProgress should be (false)
-    val tryRecordTags: List[PersistTagResult] =
+    val tryRecordTags: Seq[PersistTagResult] =
               controller.recordTags(controller.tags, this.persistenceUtils.createTestExecution("1.2.3.4.5", Instant.now(), 5, 10))
 
     val outerTestExecutionTagLength: Int = this.persistenceUtils.synchronously(TestExecutionTag.length.result)
@@ -154,7 +155,7 @@ class DefaultMeasurementCollectionControllerSpec extends WarpJUnitSpec with Core
     */
   @UnitTest
   def endMeasurement(): Unit = {
-    val controller: AbstractMeasurementCollectionController = new DefaultMeasurementCollectionController()
+    val controller: AbstractMeasurementCollectionController = new DefaultMeasurementCollectionController(TestId.empty)
 
     // shouldn't get any results if measurement is not already in progress
     controller.endMeasurementCollection() should be (TrialResult.empty)
@@ -185,7 +186,7 @@ class DefaultMeasurementCollectionControllerSpec extends WarpJUnitSpec with Core
     */
   @UnitTest
   def disableArbiters(): Unit = {
-    val controller: AbstractMeasurementCollectionController = new DefaultMeasurementCollectionController()
+    val controller: AbstractMeasurementCollectionController = new DefaultMeasurementCollectionController(TestId.empty)
     controller.registerArbiter(new SmartNumberArbiter())
     controller.disableArbiters()
     controller.arbiters.foreach { arbiter => arbiter.isEnabled should be (false) }
@@ -196,7 +197,7 @@ class DefaultMeasurementCollectionControllerSpec extends WarpJUnitSpec with Core
     */
   @UnitTest
   def disableIntrusiveCollectors(): Unit = {
-    val controller: AbstractMeasurementCollectionController = new DefaultMeasurementCollectionController()
+    val controller: AbstractMeasurementCollectionController = new DefaultMeasurementCollectionController(TestId.empty)
 
     controller.registerCollector(new AbstractMeasurementCollector {
       override val isIntrusive: Boolean = true
@@ -217,7 +218,7 @@ class DefaultMeasurementCollectionControllerSpec extends WarpJUnitSpec with Core
     */
   @UnitTest
   def exceptionsHandled(): Unit = {
-    val controller: AbstractMeasurementCollectionController = new DefaultMeasurementCollectionController()
+    val controller: AbstractMeasurementCollectionController = new DefaultMeasurementCollectionController(TestId.empty)
 
     // use a collector that throws an exception during start
     controller.registerCollector(new AbstractMeasurementCollector {
@@ -250,7 +251,7 @@ class DefaultMeasurementCollectionControllerSpec extends WarpJUnitSpec with Core
     */
   @UnitTest
   def register(): Unit = {
-    val controller : DefaultMeasurementCollectionController = new DefaultMeasurementCollectionController()
+    val controller : DefaultMeasurementCollectionController = new DefaultMeasurementCollectionController(TestId.empty)
     controller.beginMeasurementCollection()
 
     // registration calls should not be successful when there is already a measurement in progress.

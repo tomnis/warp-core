@@ -1,19 +1,19 @@
 package com.workday.warp.dsl
 
 import com.workday.telemetron.spec.HasRandomTestId
-import com.workday.warp.arbiters.ArbiterLike
-import com.workday.warp.{RequirementViolationException, TrialResult}
+import com.workday.warp.arbiters.{ArbiterLike, Ballot, RequirementViolationException}
+import com.workday.warp.{TestId, TrialResult}
 import com.workday.warp.collectors.{AbstractMeasurementCollectionController, AbstractMeasurementCollector, Defaults}
 import com.workday.warp.utils.Implicits._
 import com.workday.warp.persistence.TablesLike._
 import com.workday.warp.persistence._
-import com.workday.warp.utils.Ballot
 import org.pmw.tinylog.Logger
 import com.workday.warp.dsl.WarpMatchers._
 import com.workday.warp.dsl.using._
 import com.workday.warp.dsl.Implicits._
 import com.workday.warp.junit.{UnitTest, WarpJUnitSpec}
 import com.workday.warp.math.{DistributionLike, GaussianDistribution}
+import com.workday.warp.TestIdImplicits.methodSignatureIsTestId
 import org.junit.jupiter.api.parallel.Isolated
 import org.scalatest.exceptions.TestFailedException
 
@@ -330,15 +330,14 @@ class DslSpec extends WarpJUnitSpec with HasRandomTestId {
   @UnitTest
   def testId(): Unit = {
     // check that we can manually override the test id
-    val someTestId: String = "com.workday.warp.dsl.test1"
+    val someTestId: TestId = "com.workday.warp.dsl.test1"
     val config: ExecutionConfig = using testId someTestId
     Researcher(config).collectionController().testId should be (someTestId)
     config measure { 1 + 1 }
-    ConfigStore.get(someTestId) should be (Some(config))
+    ConfigStore.get(someTestId.testId) should be (Some(config))
     Researcher(using iterations 5 testId someTestId).collectionController().testId should be (someTestId)
 
-    // check that we can read it from telemetron name rule
-    val randomTestId: String = this.randomTestId()
+    val randomTestId: TestId = this.randomTestId()
     Researcher(using testId randomTestId).collectionController().testId should be (randomTestId)
 
     // check that we handle empty string correctly
