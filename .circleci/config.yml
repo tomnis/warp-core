@@ -26,6 +26,7 @@ jobs:
       # Customize the JVM maximum heap limit
       JVM_OPTS: -Xmx3200m
       TERM: dumb
+      WD_WARP_JDBC_URL: jdbc:mysql://localhost:3306/warp_core?createDatabaseIfNotExist=true&zeroDateTimeBehavior=convertToNull&verifyServerCertificate=false&useSSL=true
 
     steps:
       - checkout
