@@ -1,49 +1,93 @@
 buildscript {
     // set a valid scala suffix for the buildscript itself
-    project.ext.scalaSuffix = '_2.11'
+    project.ext.scalaSuffix = '_2.12'
     apply from: file("${rootDir}/versionInfo.gradle")
 
     repositories {
 		jcenter()
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+        maven {
+            url  "https://dl.bintray.com/ngbinh/maven"
+        }
     }
 
     dependencies {
         classpath "com.adtran:scala-multiversion-plugin:${versions.scalaMultiversion}"
-        classpath "com.netflix.nebula:gradle-dependency-lock-plugin:${versions.nebulaDependencyLock}"
         classpath "com.netflix.nebula:gradle-git-scm-plugin:${versions.nebulaGit}"
-        classpath "com.netflix.nebula:gradle-lint-plugin:${versions.nebulaGradleLint}"
         classpath "com.netflix.nebula:nebula-release-plugin:${versions.nebulaRelease}"
         classpath "com.netflix.nebula:nebula-publishing-plugin:${versions.nebulaPublish}"
-        classpath "org.ajoberstar:grgit:${versions.gradleGit}"
+        classpath "io.github.cosmicsilence:gradle-scalafix:${versions.scalafix}"
+        classpath "org.ajoberstar.grgit:grgit-gradle:${versions.gradleGit}"
         classpath "org.github.ngbinh.scalastyle:gradle-scalastyle-plugin${project.scalaSuffix}:${versions.scalaStyle}"
         classpath "org.kt3k.gradle.plugin:coveralls-gradle-plugin:${versions.coveralls}"
         classpath "org.scoverage:gradle-scoverage:${versions.gradleScoverage}"
     }
+
+    // lock buildscript dependencies
+    configurations.classpath {
+        resolutionStrategy.activateDependencyLocking()
+    }
 }
 
-apply plugin: 'base'
-apply plugin: 'java'
-apply plugin: 'checkstyle'
-apply plugin: 'scala'
-apply plugin: 'scalaStyle'
-apply plugin: 'idea'
-apply plugin: 'com.adtran.scala-multiversion-plugin'
-apply plugin: 'org.ajoberstar.grgit'
-apply plugin: 'nebula.dependency-lock'
-apply plugin: 'nebula.gradle-git-scm'
-apply plugin: 'nebula.lint'
-apply plugin: 'nebula.release'
-apply plugin: 'nebula.maven-resolved-dependencies'
-apply plugin: 'org.scoverage'
-apply plugin: 'com.github.kt3k.coveralls'
-apply plugin: 'maven-publish'
-apply plugin: 'signing'
-apply from: file("${rootDir}/versionInfo.gradle")
 
-repositories {
-    mavenLocal()
-    jcenter()
+allprojects {
+    apply plugin: 'base'
+    apply plugin: 'java-library'
+    apply plugin: 'checkstyle'
+    apply plugin: 'scala'
+    // apply multiversion to individual projects
+    apply plugin: 'com.adtran.scala-multiversion-plugin'
+    apply plugin: 'scalaStyle'
+    apply plugin: 'idea'
+    apply plugin: 'org.ajoberstar.grgit'
+    apply plugin: 'nebula.gradle-git-scm'
+    apply plugin: 'nebula.release'
+    apply plugin: 'nebula.maven-resolved-dependencies'
+    apply plugin: 'org.scoverage'
+// must be applied after scoverage
+    apply plugin: 'io.github.cosmicsilence.scalafix'
+    apply plugin: 'com.github.kt3k.coveralls'
+    apply plugin: 'maven-publish'
+    apply plugin: 'signing'
+    apply from: file("${rootDir}/versionInfo.gradle")
+
+    repositories {
+        mavenLocal()
+        jcenter()
+    }
+
+    // we want uniform explicit control over scala version rather than potentially transitively pulling a different version
+    dependencies {
+        api ("org.scala-lang:scala-library:%scala-version%") {
+            force = true
+        }
+        testRuntimeOnly "org.junit.jupiter:junit-jupiter-engine:${versions.junit5}"
+        testRuntimeOnly("org.junit.vintage:junit-vintage-engine:${versions.junit5}") {
+            because 'allows JUnit 3 and JUnit 4 tests to run'
+        }
+        testRuntimeOnly("org.junit.platform:junit-platform-launcher:${versions.junit5PlatformLauncher}") {
+            because 'allows tests to run from IDEs that bundle older version of launcher'
+        }
+    }
 }
+
+sourceCompatibility = JavaVersion.VERSION_1_8
+targetCompatibility = JavaVersion.VERSION_1_8
+
+project(':warp-core') {
+    dependencies {
+
+    }
+}
+
+project(':warp-core-gatling') {
+    dependencies {
+        api project(':warp-core')
+    }
+}
+
 
 // teamcity properties come packaged up in 'teamcity' array. set these as system properties so they can all be treated the
 // same later when we are forwarding on properties to test jvms.
@@ -53,205 +97,23 @@ if (project.hasProperty("teamcity")) {
     }
 }
 
-sourceCompatibility = 1.8
-targetCompatibility = 1.8
-
-// keep in alphabetical order
-dependencies {
-    compile "com.google.code.gson:gson:${versions.gson}"
-    compile "com.google.guava:guava:${versions.guava}"
-    compile "com.google.inject:guice:${versions.guice}"
-    compile "com.typesafe:config:${versions.typesafeConfig}"
-    compile "com.typesafe.slick:slick_%%:${versions.slick}"
-    compile "com.typesafe.slick:slick-hikaricp_%%:${versions.slick}"
-    compile "commons-io:commons-io:${versions.commonsIo}"
-    // Could not exclude concrete logger implementation due to it being directly used within gatling-app
-    compile "io.gatling:gatling-app:${versions.gatling}"
-    compile "io.gatling:gatling-core:${versions.gatling}"
-    compile "io.gatling:gatling-http:${versions.gatling}"
-    compile "junit:junit:${versions.junit}"
-    compile "org.apache.commons:commons-configuration2:${versions.commonsConfiguration2}"
-    compile "org.apache.commons:commons-math3:${versions.math3}"
-    compile "org.flywaydb:flyway-core:${versions.flyway}"
-    compile "org.influxdb:influxdb-java:${versions.influxDbClient}"
-    compile "org.scala-lang:scala-library:%scala-version%"
-    compile "org.scala-lang:scala-reflect:%scala-version%"
-    compile "org.scalactic:scalactic_%%:${versions.scalactic}"
-    compile "org.scalatest:scalatest_%%:${versions.scalatest}"
-    compile "org.tinylog:tinylog:${versions.tinylog}"
-
-    compile files(org.gradle.internal.jvm.Jvm.current().toolsJar)
-
-    testCompile "io.gatling:gatling-commons:${versions.gatling}"
-
-    scoverage "org.scoverage:scalac-scoverage-plugin_%%:${versions.scalacScoverage}"
-    scoverage "org.scoverage:scalac-scoverage-runtime_%%:${versions.scalacScoverage}"
-
-    runtimeOnly "com.h2database:h2:${versions.h2}"
-    runtimeOnly "commons-beanutils:commons-beanutils:${versions.beanUtils}"
-    runtimeOnly "mysql:mysql-connector-java:${versions.mysqlConnector}"
-}
-
-sourceSets {
-
-    main {
-        // joint compilation
-        scala {
-            srcDir 'src/main/java'
-            srcDir 'src/main/scala'
-            // we want our generated code to live in a separate directory so we can easily skip scalastyle,
-            // however its convenient to treat this as part of the same source set and compile everything together
-            srcDir 'src/generated/scala'
-        }
-        java {
-            srcDirs = [] // don't compile Java code twice
-        }
-    }
-
-    test {
-        // joint compilation
-        scala {
-            srcDir 'src/test/java'
-            srcDir 'src/test/scala'
-        }
-        java {
-            srcDirs = [] // don't compile Java code twice
-        }
-    }
-}
-
-task sourcesJar(type: Jar) {
-    classifier = 'sources'
-    from sourceSets.main.allSource
-}
-
-// fake javadoc jar to pass sonatype rules
-// See https://central.sonatype.org/pages/requirements.html
-task javadocJar(type: Jar) {
-    classifier = 'javadoc'
-    from new File('javadoc-fake')
-}
-
-task scaladocJar(type: Jar) {
-    classifier = 'scaladoc'
-    from scaladoc.destinationDir
-}
-
-scaladoc {
-    classpath = sourceSets.main.runtimeClasspath
-    destinationDir file("$rootDir/gh-pages-src/static/scaladoc/${project.name}")
-}
-
 // copy config template into a usable place
 // note this task does not have any dependencies, and nothing depends on this task.
 // the expectation is this task will always be run in a ci environment,
 // and can be run once locally on a fresh checkout to create a starting config point
 task copyConfigTemplate(type: Copy) {
-    from "config-templates/warp.properties.template"
+    from "$rootDir/config-templates/warp.properties.template"
     rename { String filename ->
         filename - '.template'
     }
 
-    into "config/"
+    into "$rootDir/config/"
 }
 
-task unitTest(type: Test) {
-    useJUnit {
-        excludeCategories 'com.workday.warp.common.category.IntegrationTest'
-        includeCategories 'com.workday.warp.common.category.UnitTest'
-    }
-}
-
-test {
-    minHeapSize = "500m"
-    maxHeapSize = "8g"
-
-    testLogging {
-        events 'started', 'passed'
-        showStandardStreams = true
-    }
-}
-
-testScoverage {
-    minHeapSize = "500m"
-    maxHeapSize = "8g"
-
-    testLogging {
-        events 'started', 'passed'
-        showStandardStreams = true
-    }
-}
-
-task deleteSchema(type: JavaExec, dependsOn: compileTestScala) {
-    description = "deletes the db schema prior to running tests"
-    main = "com.workday.warp.persistence.DropCoreSchema"
-    classpath = sourceSets.main.runtimeClasspath
-    doLast {
-        println("gradle task deleted schema")
-    }
-}
-
-scalaStyle {
-    configLocation = "${rootDir}/scalastyle.xml"
-    includeTestSourceDirectory = true
-    source = "src/main/scala"
-    testSource = "src/test/scala"
-}
-
-checkstyle {
-    toolVersion = "${versions.checkstyle}"
-    configFile = new File("${rootDir}/checkstyle.xml")
-}
-
-tasks.withType(JavaExec).each { task ->
-    System.properties.each { key, val ->
-        // TODO see if we need to filter the forwarded properties here
-        task.systemProperty key, val
-    }
-}
-
-tasks.withType(Test).each { task ->
-    if (project.hasProperty("shouldDeleteSchema") && Boolean.valueOf(project.shouldDeleteSchema.toString())) {
-        task.dependsOn(deleteSchema)
-    }
-    task.finalizedBy(scalaStyle)
-    task.finalizedBy(checkstyleMain)
-    task.finalizedBy(checkstyleTest)
-
-    System.properties.each { key, val ->
-        // TODO see if we need to filter the forwarded properties here
-        task.systemProperty key, val
-    }
-}
-
-dependencyLock {
-    lockFile = "dependencies${project.scalaSuffix}.lock"
-    includeTransitives = true
-}
-
-commitDependencyLock {
-    message = "(auto) update dependency lock file, version=${project.version.toString()}"
-}
-
-gradleLint {
-    rules = ['unused-dependency']
-}
-
-scoverage {
-    // Excluding autogenerated Tables
-    excludedPackages = ["com.workday.warp.persistence.model", "com.workday.warp.examples"]
-    excludedFiles = []
-}
-
-// Defaults: 75% of Statements. Other types of coverage: Line, Branch
-checkScoverage {
-    coverageType = 'Statement'
-    minimumRate = 0.92
-}
-
-coveralls {
-    coberturaReportPath = "${buildDir}/reports/scoverage/cobertura.xml"
-}
+import org.apache.tools.ant.filters.ReplaceTokens
+import io.github.cosmicsilence.scalafix.ScalafixTask
+import org.scoverage.ScoverageAggregate
+import org.scoverage.ScoverageReport
 
 /**
  * @return true iff we are building a maven snapshot or a devSnapshot.
@@ -260,59 +122,261 @@ static boolean isSnapshot(String inferredVersion) {
     inferredVersion.endsWith("-SNAPSHOT") || inferredVersion.contains("-dev.") || inferredVersion.contains(".dev.")
 }
 
-publishing {
-    publications {
-        mavenJava(MavenPublication) {
-            groupId = 'com.workday.warp'
-            artifactId = 'warp-core'
-            from components.java
-            artifact sourcesJar
-            artifact javadocJar
-            artifact scaladocJar
-            pom {
-                name = 'warp-core'
-                description = 'A library for scientific performance testing.'
-                url = 'https://workday.github.io/warp-core/'
-                licenses {
-                    license {
-                        name = 'MIT License'
-                        url = 'https://opensource.org/licenses/mit-license.php'
-                    }
-                }
-                developers {
-                    developer {
-                        id = 'tomnis'
-                        name = 'tomas mccandless'
-                        email = 'tomas.mccandless@gmail.com'
-                    }
-                }
-                scm {
-                    connection = 'scm:git:git://github.com/Workday/warp-core.git'
-                    developerConnection = 'scm:git:ssh://github.com:Workday/warp-core.git'
-                    url = 'https://github.com/Workday/warp-core/tree/master'
-                }
+
+subprojects {
+
+    apply from: file('dependencies.gradle')
+
+
+    sourceSets {
+
+        main {
+            // joint compilation
+            scala {
+                srcDir 'src/main/java'
+                srcDir 'src/main/scala'
+                // we want our generated code to live in a separate directory so we can easily skip scalastyle and scalafix,
+                // however its convenient to treat this as part of the same source set and compile everything together
+                srcDir 'src/generated/scala'
+            }
+            java {
+                srcDirs = [] // don't compile Java code twice
+            }
+        }
+
+        test {
+            // joint compilation
+            scala {
+                srcDir 'src/test/java'
+                srcDir 'src/test/scala'
+            }
+            java {
+                srcDirs = [] // don't compile Java code twice
             }
         }
     }
 
-    repositories {
-        maven {
-            credentials {
-                // will be null if these aren't set as project properties
-                username findProperty("sonatypeUsername")
-                password findProperty("sonatypePassword")
-            }
-            String snapshotsRepoUrl = 'https://oss.sonatype.org/content/repositories/snapshots'
-            String releasesRepoUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2'
-            url = isSnapshot(version.toString()) ? snapshotsRepoUrl : releasesRepoUrl
+
+    processResources {
+        filter(ReplaceTokens, tokens: ['version': project.version.toString()])
+    }
+
+    task sourcesJar(type: Jar) {
+        archiveClassifier = 'sources'
+        from sourceSets.main.allSource
+    }
+
+// fake javadoc jar to pass sonatype rules
+// See https://central.sonatype.org/pages/requirements.html
+    task javadocJar(type: Jar) {
+        archiveClassifier = 'javadoc'
+        from new File("$rootDir/javadoc-fake")
+    }
+
+    task scaladocJar(type: Jar) {
+        archiveClassifier = 'scaladoc'
+        from scaladoc.destinationDir
+    }
+
+    scaladoc {
+        classpath = sourceSets.main.runtimeClasspath
+        destinationDir file("$rootDir/gh-pages-src/static/scaladoc/${project.name}")
+    }
+
+    tasks.withType(ScalaCompile) {
+        scalaCompileOptions.additionalParameters = [
+                // needed for "RemoveUnused" scalafix rule
+                '-Ywarn-unused'
+        ]
+    }
+
+    task unitTest(type: Test) {
+        useJUnitPlatform {
+            includeTags 'unitTest'
+            excludeTags 'integTest', 'ci'
         }
     }
-}
 
-signing {
-    // only require signing for non-snapshot versions being published to maven central
-    required {
-        !isSnapshot(version.toString()) && gradle.taskGraph.hasTask("publish")
+    test {
+        minHeapSize = "500m"
+        maxHeapSize = "8g"
+
+        testLogging {
+            events 'started', 'passed'
+            showStandardStreams = true
+        }
+
+        useJUnitPlatform()
     }
-    sign publishing.publications.mavenJava
+
+    task deleteSchema(type: JavaExec, dependsOn: compileTestScala) {
+        description = "deletes the db schema prior to running tests"
+        main = "com.workday.warp.persistence.DropCoreSchema"
+        classpath = sourceSets.main.runtimeClasspath
+        doLast {
+            println("gradle task deleted schema")
+        }
+    }
+
+    scalaStyle {
+        configLocation = "${rootDir}/scalastyle.xml"
+        includeTestSourceDirectory = true
+        source = "src/main/scala"
+        testSource = "src/test/scala"
+    }
+
+    checkstyle {
+        toolVersion = "${versions.checkstyle}"
+        configFile = new File("${rootDir}/checkstyle.xml")
+    }
+
+    tasks.withType(JavaExec).each { task ->
+        task.systemProperties(System.properties)
+        task.systemProperty "wd.warp.config.directory", "$rootDir/config"
+    }
+
+    tasks.withType(Test).each { task ->
+        if (project.hasProperty("shouldDeleteSchema") && Boolean.valueOf(project.shouldDeleteSchema.toString())) {
+            task.dependsOn(deleteSchema)
+        }
+        task.finalizedBy(scalaStyle)
+        task.finalizedBy(checkstyleMain)
+        task.finalizedBy(checkstyleTest)
+
+        task.systemProperties(System.properties)
+        task.systemProperty "wd.warp.config.directory", "$rootDir/config"
+    }
+
+    coveralls {
+        coberturaReportPath = "${buildDir}/reports/scoverage${scalaSuffix}/cobertura.xml"
+    }
+
+    scalafix {
+        excludes = ["**/persistence/model/**"]
+        ignoreSourceSets = ["scoverage"]
+    }
+
+
+// current workaround nebula incremental analysis failure
+// see: https://github.com/gradle/gradle/issues/6854
+    configurations.all {
+        if (name.startsWith("incrementalScalaAnalysis")) {
+            extendsFrom = []
+        }
+    }
+
+
+// sonatype doesn't support gradle module metadata (gradle 6 auto feature) yet
+// see https://discuss.gradle.org/t/unable-to-publish-artifact-to-mavencentral/33727
+    tasks.withType(GenerateModuleMetadata) {
+        enabled = false
+    }
+
+    afterEvaluate {
+        if (project.scalaSuffix != "_2.12") {
+            tasks.withType(ScalafixTask) {
+                enabled = false
+            }
+            tasks.withType(ScoverageReport) {
+                enabled = false
+            }
+            tasks.withType(ScoverageAggregate) {
+                enabled = false
+            }
+        }
+    }
+
+    dependencyLocking {
+        lockAllConfigurations()
+        if (project.scalaSuffix == "_2.12") {
+            lockMode = LockMode.STRICT
+        }
+        lockFile = file("$projectDir/locking/${project.name}${scalaSuffix}.lockfile")
+    }
+
+
+// taken from https://docs.gradle.org/6.2.1/userguide/dependency_locking.html#generating_and_updating_dependency_locks
+// make sure to invoke with --write-locks flag
+    task resolveAndLockAll {
+        doFirst {
+            assert gradle.startParameter.writeDependencyLocks
+        }
+        doLast {
+            configurations.findAll {
+                // Add any custom filtering on the configurations to be resolved
+                it.canBeResolved
+            }.each { it.resolve() }
+        }
+    }
+
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                groupId = 'com.workday.warp'
+                artifactId = project.name
+                from components.java
+                artifact sourcesJar
+                artifact javadocJar
+                artifact scaladocJar
+                pom {
+                    name = project.name
+                    project.description = 'A library for scientific performance testing.'
+                    url = 'https://workday.github.io/warp-core/'
+                    licenses {
+                        license {
+                            name = 'MIT License'
+                            url = 'https://opensource.org/licenses/mit-license.php'
+                        }
+                    }
+                    developers {
+                        developer {
+                            id = 'tomnis'
+                            name = 'tomas mccandless'
+                            email = 'tomas.mccandless@gmail.com'
+                        }
+                        developer {
+                            id = 'tsoppet'
+                            name = 'timothy soppet'
+                            email = 'tsoppet@gmail.com'
+                        }
+                        developer {
+                            id = 'rooeque'
+                            name = 'richie wang'
+                            email = 'wang.ruiqi.94@gmail.com'
+                        }
+                    }
+                    scm {
+                        connection = 'scm:git:git://github.com/Workday/warp-core.git'
+                        developerConnection = 'scm:git:ssh://github.com:Workday/warp-core.git'
+                        url = 'https://github.com/Workday/warp-core/tree/master'
+                    }
+                }
+            }
+        }
+
+        repositories {
+            maven {
+                credentials {
+                    // will be null if these aren't set as project properties
+                    username findProperty("sonatypeUsername")
+                    password findProperty("sonatypePassword")
+                }
+                String snapshotsRepoUrl = 'https://oss.sonatype.org/content/repositories/snapshots'
+                String releasesRepoUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2'
+                url = isSnapshot(version.toString()) ? snapshotsRepoUrl : releasesRepoUrl
+            }
+        }
+    }
+
+    nebulaRelease {
+        addReleaseBranchPattern(".*feature")
+    }
+
+    signing {
+        // only require signing for non-snapshot versions being published to maven central
+        required {
+            !isSnapshot(version.toString()) && gradle.taskGraph.hasTask("publish")
+        }
+        sign publishing.publications.mavenJava
+    }
 }
