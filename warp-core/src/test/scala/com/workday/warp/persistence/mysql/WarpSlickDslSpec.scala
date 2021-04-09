@@ -222,22 +222,29 @@ class WarpSlickDslSpec extends WarpJUnitSpec with CorePersistenceAware with Skip
   /** Tests DATE(timestamp) dsl. */
   @UnitTest
   def returnDateTimestamp(): Unit = {
+    this.truncateSchema()
     val format: SimpleDateFormat = new java.text.SimpleDateFormat("yyyy-MM-dd")
-    val date: String = format.format(new java.util.Date())
+    // in UTC
+    // mysql is in utc
+    val d = new java.util.Date()
+    val date: String = format.format(d)
 
     val testExecution: TestExecutionRowLike = this.persistenceUtils.createTestExecution(methodSignature1, Instant.now(), 1.0, 10)
     val timeStamp: Rep[sql.Timestamp] = testExecution.startTime
     val query1: Rep[sql.Date] = timeStamp.date()
     this.persistenceUtils.runWithRetries(query1.result).toString shouldEqual date
 
-    val query2: Query[Rep[sql.Date], sql.Date, Seq] = TestExecution.map(_.startTime.date())
-    this.persistenceUtils.runWithRetries(query2.result).head.toString shouldEqual date
+    val query2: Query[Rep[sql.Date], sql.Date, Seq] = TestExecution
+      .filter(_.idTestExecution === testExecution.idTestExecution).map(_.startTime.date())
+    val recordedDate: String = this.persistenceUtils.runWithRetries(query2.result).head.toString
+    recordedDate shouldEqual date
 
   }
 
   /** Tests DATE(string) dsl. */
   @UnitTest
   def returnDateString(): Unit = {
+    this.truncateSchema()
     val format: SimpleDateFormat = new java.text.SimpleDateFormat("yyyy-MM-dd")
     val format2: SimpleDateFormat = new java.text.SimpleDateFormat("yyyy-MM-dd hh:mm:ss")
     val currentDate: String = format.format(new java.util.Date())
@@ -245,7 +252,7 @@ class WarpSlickDslSpec extends WarpJUnitSpec with CorePersistenceAware with Skip
     val testExecution: TestExecutionRowLike = this.persistenceUtils.createTestExecution(methodSignature1, Instant.now(), 1.0, 10)
     val queryDate: Rep[String] = format2.format(testExecution.startTime)
     val query: Rep[sql.Date] = queryDate.date()
-    this.persistenceUtils.runWithRetries(query.result).toString shouldEqual currentDate
+    this.persistenceUtils.runWithRetries(query.result).toLocalDate.toString shouldEqual currentDate
 
   }
 

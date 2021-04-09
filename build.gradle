@@ -1,6 +1,6 @@
 buildscript {
     // set a valid scala suffix for the buildscript itself
-    project.ext.scalaSuffix = '_2.13'
+    // project.ext.scalaSuffix = '_2.13'
     apply from: file("${rootDir}/versionInfo.gradle")
 
     repositories {
@@ -121,8 +121,10 @@ task copyH2ConfigTemplate(type: Copy) {
     into "$rootDir/config/"
 }
 
-import org.apache.tools.ant.filters.ReplaceTokens
 import io.github.cosmicsilence.scalafix.ScalafixTask
+import org.apache.tools.ant.filters.ReplaceTokens
+import org.github.ngbinh.scalastyle.ScalaStyleTask
+import org.gradle.api.plugins.quality.Checkstyle
 import org.scoverage.ScoverageAggregate
 import org.scoverage.ScoverageReport
 
@@ -296,6 +298,12 @@ subprojects {
                 enabled = false
             }
             tasks.withType(ScoverageAggregate) {
+                enabled = false
+            }
+            tasks.withType(ScalaStyleTask) {
+                enabled = false
+            }
+            tasks.withType(Checkstyle) {
                 enabled = false
             }
         }
