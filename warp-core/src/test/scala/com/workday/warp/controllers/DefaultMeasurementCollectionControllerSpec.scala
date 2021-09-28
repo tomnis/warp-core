@@ -5,7 +5,7 @@ import java.time.Instant
 import com.workday.warp.TestIdImplicits.string2TestId
 import com.workday.warp.TrialResult
 import com.workday.warp.arbiters.SmartNumberArbiter
-import com.workday.warp.collectors.{AbstractMeasurementCollector, ResponseTimeCollector}
+import com.workday.warp.collectors.AbstractMeasurementCollector
 import com.workday.warp.junit.{UnitTest, WarpJUnitSpec}
 import com.workday.warp.persistence.Tables._
 import com.workday.warp.persistence.TablesLike.RowTypeClasses._
@@ -258,7 +258,6 @@ class DefaultMeasurementCollectionControllerSpec extends WarpJUnitSpec with Core
     controller.beginMeasurementCollection()
 
     // registration calls should not be successful when there is already a measurement in progress.
-    controller.registerCollector(new ResponseTimeCollector) should be (false)
     controller.registerArbiter(new SmartNumberArbiter) should be (false)
 
     controller.endMeasurementCollection()
