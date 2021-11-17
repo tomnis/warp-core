@@ -7,7 +7,8 @@ import com.workday.warp.junit.{Measure, WarpInfo, WarpJUnitSpec, WarpTest}
 import org.junit.jupiter.api.Assertions
 import org.junit.jupiter.api.{Test, TestInfo}
 import com.workday.warp.logger.WarpLogging
-
+import org.junit.jupiter.params.ParameterizedTest
+import org.junit.jupiter.params.provider.MethodSource
 
 /**
   * Created by tomas.mccandless on 2/9/21.
@@ -36,6 +37,15 @@ class ExampleSpec extends WarpJUnitSpec with WarpLogging {
   }
 
 
+  @Measure
+  @ParameterizedTest
+  @MethodSource(Array("payload"))
+  def parameterized(s: String): Unit = {
+    logger.info(s)
+  }
+
+
+
   /** A test that will be invoked a total of 6 times, 2 unmeasured warmups and 4 measured trials. */
   @WarpTest(warmups = 1, trials = 2)
   def measured(): Unit = {
@@ -56,4 +66,9 @@ class ExampleSpec extends WarpJUnitSpec with WarpLogging {
       1 + 1
     } should not exceed (5 seconds)
   }
+}
+
+object ExampleSpec {
+  def payload(): Array[String] = Array("abcd", "efgh")
+
 }

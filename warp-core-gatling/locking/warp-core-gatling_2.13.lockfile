@@ -129,6 +129,7 @@ org.jodd:jodd-lagarto:6.0.3=compileClasspath,default,runtimeClasspath,testCompil
 org.jodd:jodd-util:6.0.0=compileClasspath,default,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 org.junit.jupiter:junit-jupiter-api:5.7.2=compileClasspath,default,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 org.junit.jupiter:junit-jupiter-engine:5.7.2=testRuntimeClasspath
+org.junit.jupiter:junit-jupiter-params:5.7.2=compileClasspath,default,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 org.junit.platform:junit-platform-commons:1.7.2=compileClasspath,default,runtimeClasspath,testCompileClasspath,testRuntimeClasspath
 org.junit.platform:junit-platform-engine:1.7.2=testRuntimeClasspath
 org.junit.platform:junit-platform-launcher:1.7.2=testRuntimeClasspath

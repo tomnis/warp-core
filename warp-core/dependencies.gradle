@@ -27,6 +27,8 @@ dependencies {
     // used for custom rules and runners
     api "junit:junit:${versions.junit4}"
     api "org.junit.jupiter:junit-jupiter-api:${versions.junit5}"
+    api "org.junit.jupiter:junit-jupiter-params:${versions.junit5}"
+
 
     api "org.apache.commons:commons-configuration2:${versions.commonsConfiguration2}"
     // used for linear algebra implicits
