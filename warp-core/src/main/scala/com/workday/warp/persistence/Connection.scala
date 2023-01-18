@@ -178,7 +178,6 @@ object Connection {
 
   Runtime.getRuntime.addShutdownHook(new Thread {
     override def run(): Unit = {
-      Thread.sleep(4096)
       Await.result(db.shutdown, timeout)
     }
   })
