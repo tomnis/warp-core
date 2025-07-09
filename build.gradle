@@ -20,6 +20,7 @@ buildscript {
         classpath "org.kt3k.gradle.plugin:coveralls-gradle-plugin:${versions.coveralls}"
         classpath "org.scoverage:gradle-scoverage:${versions.gradleScoverage}"
         classpath "com.github.alisiikh:gradle-scalastyle-plugin:${versions.scalaStyle}"
+        classpath "com.vanniktech.maven.publish:com.vanniktech.maven.publish.gradle.plugin:${versions.gradleMavenPublish}"
     }
 
     // lock buildscript dependencies
@@ -48,6 +49,7 @@ allprojects {
     apply plugin: 'com.github.kt3k.coveralls'
     apply plugin: 'maven-publish'
     apply plugin: 'signing'
+    apply plugin: 'com.vanniktech.maven.publish'
     apply from: file("${rootDir}/versionInfo.gradle")
 
     repositories {
@@ -148,7 +150,11 @@ import org.scoverage.ScoveragePlugin
  * @return true iff we are building a maven snapshot or a devSnapshot.
  */
 static boolean isSnapshot(String inferredVersion) {
-    inferredVersion.endsWith("-SNAPSHOT") || inferredVersion.contains("-dev.") || inferredVersion.contains(".dev.")
+    inferredVersion.endsWith("-SNAPSHOT") || isDevSnapshot(inferredVersion)
+}
+
+static boolean isDevSnapshot(String inferredVersion) {
+    inferredVersion.contains("-dev.") || inferredVersion.contains(".dev.")
 }
 
 static String customBuildDir(Project p, String scalaVersion) {
@@ -347,79 +353,89 @@ subprojects {
         }
     }
 
-    publishing {
-        publications {
-            mavenJava(MavenPublication) {
-                groupId = 'com.workday.warp'
-                artifactId = project.name
-                from components.java
-                artifact sourcesJar
-                artifact javadocJar
-                artifact scaladocJar
-                pom {
-                    name = project.name
-                    project.description = 'A library for scientific performance testing.'
-                    url = 'https://workday.github.io/warp-core/'
-                    licenses {
-                        license {
-                            name = 'MIT License'
-                            url = 'https://opensource.org/licenses/mit-license.php'
-                        }
-                    }
-                    developers {
-                        developer {
-                            id = 'tomnis'
-                            name = 'tomas mccandless'
-                            email = 'tomas.mccandless@gmail.com'
-                        }
-                        developer {
-                            id = 'tsoppet'
-                            name = 'timothy soppet'
-                            email = 'tsoppet@gmail.com'
-                        }
-                        developer {
-                            id = 'rooeque'
-                            name = 'richie wang'
-                            email = 'wang.ruiqi.94@gmail.com'
-                        }
-                        developer {
-                            id = 'sarcasticsimba'
-                            name = 'vignesh kalidas'
-                            email = 'vignesh10010@gmail.com'
-                        }
-                    }
-                    scm {
-                        connection = 'scm:git:git://github.com/Workday/warp-core.git'
-                        developerConnection = 'scm:git:ssh://github.com:Workday/warp-core.git'
-                        url = 'https://github.com/Workday/warp-core/tree/master'
-                    }
+    mavenPublishing {
+        publishToMavenCentral()
+        String derivedVersion = isDevSnapshot(project.version.toString()) ? project.version.toString() + "-SNAPSHOT" : version.toString()
+
+        coordinates("com.workday.warp", project.name, derivedVersion)
+
+        pom {
+            name = project.name
+            project.description = 'A library for scientific performance testing.'
+            url = 'https://workday.github.io/warp-core/'
+            licenses {
+                license {
+                    name = 'MIT License'
+                    url = 'https://opensource.org/licenses/mit-license.php'
                 }
+            }
+            developers {
+                developer {
+                    id = 'tomnis'
+                    name = 'tomas mccandless'
+                    email = 'tomas.mccandless@gmail.com'
+                }
+                developer {
+                    id = 'tsoppet'
+                    name = 'timothy soppet'
+                    email = 'tsoppet@gmail.com'
+                }
+                developer {
+                    id = 'rooeque'
+                    name = 'richie wang'
+                    email = 'wang.ruiqi.94@gmail.com'
+                }
+                developer {
+                    id = 'sarcasticsimba'
+                    name = 'vignesh kalidas'
+                    email = 'vignesh10010@gmail.com'
+                }
+            }
+            scm {
+                connection = 'scm:git:git://github.com/Workday/warp-core.git'
+                developerConnection = 'scm:git:ssh://github.com:Workday/warp-core.git'
+                url = 'https://github.com/Workday/warp-core/tree/master'
             }
         }
 
-        repositories {
-            maven {
-                credentials {
-                    // will be null if these aren't set as project properties
-                    username findProperty("sonatypeUsername")
-                    password findProperty("sonatypePassword")
-                }
-                String snapshotsRepoUrl = 'https://oss.sonatype.org/content/repositories/snapshots'
-                String releasesRepoUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2'
-                url = isSnapshot(version.toString()) ? snapshotsRepoUrl : releasesRepoUrl
-            }
-        }
+        signAllPublications()
     }
+
+//    publishing {
+//        publications {
+//            mavenJava(MavenPublication) {
+//                groupId = 'com.workday.warp'
+//                artifactId = project.name
+//                from components.java
+//                artifact sourcesJar
+//                artifact javadocJar
+//                artifact scaladocJar
+//            }
+//        }
+//
+//        repositories {
+//            maven {
+//                credentials {
+//                    // will be null if these aren't set as project properties
+//                    username findProperty("sonatypeUsername")
+//                    password findProperty("sonatypePassword")
+//                }
+//                String snapshotsRepoUrl = 'https://oss.sonatype.org/content/repositories/snapshots'
+//                String releasesRepoUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2'
+//                url = isSnapshot(version.toString()) ? snapshotsRepoUrl : releasesRepoUrl
+//            }
+//        }
+//    }
 
     nebulaRelease {
         addReleaseBranchPattern(".*feature")
     }
 
-    signing {
+//    signing {
         // only require signing for non-snapshot versions being published to maven central
-        required {
-            !isSnapshot(version.toString()) && gradle.taskGraph.hasTask("publish")
-        }
-        sign publishing.publications.mavenJava
-    }
+//        required {
+//            !isSnapshot(version.toString()) && gradle.taskGraph.hasTask("publish")
+//        }
+//        sign publishing.publications.mavenJava
+//    }
 }
