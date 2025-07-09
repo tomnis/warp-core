@@ -401,41 +401,7 @@ subprojects {
         signAllPublications()
     }
 
-//    publishing {
-//        publications {
-//            mavenJava(MavenPublication) {
-//                groupId = 'com.workday.warp'
-//                artifactId = project.name
-//                from components.java
-//                artifact sourcesJar
-//                artifact javadocJar
-//                artifact scaladocJar
-//            }
-//        }
-//
-//        repositories {
-//            maven {
-//                credentials {
-//                    // will be null if these aren't set as project properties
-//                    username findProperty("sonatypeUsername")
-//                    password findProperty("sonatypePassword")
-//                }
-//                String snapshotsRepoUrl = 'https://oss.sonatype.org/content/repositories/snapshots'
-//                String releasesRepoUrl = 'https://oss.sonatype.org/service/local/staging/deploy/maven2'
-//                url = isSnapshot(version.toString()) ? snapshotsRepoUrl : releasesRepoUrl
-//            }
-//        }
-//    }
-
     nebulaRelease {
         addReleaseBranchPattern(".*feature")
     }
-
-//    signing {
-        // only require signing for non-snapshot versions being published to maven central
-//        required {
-//            !isSnapshot(version.toString()) && gradle.taskGraph.hasTask("publish")
-//        }
-//        sign publishing.publications.mavenJava
-//    }
 }
