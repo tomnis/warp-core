@@ -46,5 +46,8 @@ jobs:
           key: ${{ runner.os }}-gradle-${{ matrix.scala }}-${{ hashFiles('**/*.gradle') }}
           restore-keys: ${{ runner.os }}-gradle-${{ matrix.scala }}
 
+      - name: Set up config file
+        run: ./gradlew copy${{ matrix.db }}ConfigTemplate
+
       - name: Build with Gradle
-        run: ./gradlew copy${{ matrix.db }}ConfigTemplate :warp-core:checkScoverage aggregateScoverage checkScalafix publishToMavenLocal -PscalaVersion=${{ matrix.scala }} -PshowTestStandardStreams=true --stacktrace
+        run: ./gradlew :warp-core:checkScoverage aggregateScoverage checkScalafix publishToMavenLocal -PscalaVersion=${{ matrix.scala }} -PshowTestStandardStreams=true --stacktrace
